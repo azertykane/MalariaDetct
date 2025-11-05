@@ -115,8 +115,17 @@ def predict_single():
         return redirect(url_for('index'))
 
     try:
-        label, conf = predict_image_stream(file)
-        return render_template('result_single.html', label=label, confidence=conf)
+        # Lire image en mémoire pour affichage
+        image_bytes = file.read()
+        label, conf = predict_image_stream(BytesIO(image_bytes))
+
+        # Convertir image pour affichage dans le template
+        import base64
+        img_base64 = base64.b64encode(image_bytes).decode('utf-8')
+        image_data = f"data:image/jpeg;base64,{img_base64}"
+
+        return render_template('result_single.html', label=label, confidence=conf, image_data=image_data)
+
     except Exception as e:
         print(f"Erreur traitement image : {e}")
         flash("Erreur lors du traitement de l'image.", "error")
