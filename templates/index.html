@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Détection du Paludisme - Système Expert</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="logo">
+                <i class="fas fa-microscope"></i>
+                <span>MalariaDetect </span>
+            </div>
+            <div class="nav-links">
+                <a href="#"><i class="fas fa-home"></i> Accueil</a>
+                <a href="#"><i class="fas fa-info-circle"></i> À propos</a>
+                <a href="#"><i class="fas fa-envelope"></i> Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenu principal -->
+    <div class="main-card">
+        <div class="header-section">
+            <h1><i class="fas fa-dna"></i> Détection Intelligente du Paludisme</h1>
+            <p class="subtitle">Système d'analyse automatisée d'images de globules rouges pour la détection du parasite <em>Plasmodium</em></p>
+        </div>
+
+        <!-- Statistiques rapides -->
+        <div class="stats-overview">
+            <div class="stat-item">
+                <i class="fas fa-bacteria" style="color: var(--danger);"></i>
+                <span class="stat-number">96.52%</span>
+                <span class="stat-label">Précision</span>
+            </div>
+            <div class="stat-item">
+                <i class="fas fa-clock" style="color: var(--primary);"></i>
+                <span class="stat-number">&lt; 2s</span>
+                <span class="stat-label">Analyse rapide</span>
+            </div>
+            <div class="stat-item">
+                <i class="fas fa-images" style="color: var(--success);"></i>
+                <span class="stat-number">Illimité</span>
+                <span class="stat-label">Images analysées</span>
+            </div>
+        </div>
+
+        <!-- Mode Analyse Unique -->
+        <div class="upload-section">
+            <h2><i class="fas fa-file-image"></i> Analyse d'Image Unique</h2>
+            <p>Chargez une image de frottis sanguin pour une analyse immédiate</p>
+            <form action="/predict_single" method="post" enctype="multipart/form-data">
+                <div class="file-input-wrapper">
+                    <input type="file" name="image" accept="image/*" required id="singleImage">
+                    <label for="singleImage" class="file-label">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>Choisir une image...</span>
+                    </label>
+                </div>
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-search"></i> Analyser l'Image
+                </button>
+            </form>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Mode Analyse de Dossier -->
+        <div class="upload-section">
+            <h2><i class="fas fa-folder-open"></i> Analyse de Dossier Patient</h2>
+            <p>Chargez un dossier complet d'images pour une analyse batch et un rapport détaillé</p>
+            <form action="/predict_folder" method="post" enctype="multipart/form-data">
+                <div class="file-input-wrapper">
+                    <input type="file" name="folder" webkitdirectory directory multiple required id="folderInput">
+                    <label for="folderInput" class="file-label">
+                        <i class="fas fa-folder"></i>
+                        <span>Sélectionner un dossier...</span>
+                    </label>
+                </div>
+                <button type="submit" class="btn-secondary">
+                    <i class="fas fa-chart-bar"></i> Analyser le Dossier
+                </button>
+            </form>
+        </div>
+
+        <!-- Informations importantes -->
+        <div class="info-section">
+            <h3><i class="fas fa-lightbulb"></i> Recommandations</h3>
+            <ul>
+                <li>Formats supportés : PNG, JPG, JPEG</li>
+                <li>Résolution recommandée : 128x128 pixels</li>
+                <li>Images de frottis sanguin colorés uniquement</li>
+                <li>Résultats à interpréter par un professionnel de santé</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Gestion de l'affichage des noms de fichiers
+        document.getElementById('singleImage').addEventListener('change', function(e) {
+            const label = this.nextElementSibling.querySelector('span');
+            if (this.files.length > 0) {
+                label.textContent = this.files[0].name;
+            }
+        });
+
+        document.getElementById('folderInput').addEventListener('change', function(e) {
+            const label = this.nextElementSibling.querySelector('span');
+            if (this.files.length > 0) {
+                label.textContent = `${this.files.length} fichiers sélectionnés`;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport Patient - MalariaDetect </title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="logo">
+                <i class="fas fa-microscope"></i>
+                <span>MalariaDetect</span>
+            </div>
+            <div class="nav-links">
+                <a href="/"><i class="fas fa-home"></i> Accueil</a>
+                <a href="#"><i class="fas fa-file-pdf"></i> Exporter PDF</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="result-card">
+        <h1><i class="fas fa-file-medical-alt"></i> Rapport d'Analyse Patient</h1>
+        
+        <!-- Statistiques globales -->
+        <div class="progress-container">
+            <h2><i class="fas fa-chart-pie"></i> Taux d'Infection Global</h2>
+            <div class="progress-bar">
+            </div>
+            <div class="stats">
+                <span>{{ infection_rate | round(2) }}% Infecté</span>
+                <span>{{ (100 - infection_rate) | round(2) }}% Sain</span>
+            </div>
+            
+            <!-- Résumé chiffré -->
+            <div class="summary-stats">
+                <div class="summary-item danger">
+                    <i class="fas fa-bacteria"></i>
+                    <span class="count">{{ results | selectattr('1', 'equalto', 'Parasitized') | list | length }}</span>
+                    <span class="label">Images Parasitées</span>
+                </div>
+                <div class="summary-item success">
+                    <i class="fas fa-check-circle"></i>
+                    <span class="count">{{ results | selectattr('1', 'equalto', 'Uninfected') | list | length }}</span>
+                    <span class="label">Images Saines</span>
+                </div>
+                <div class="summary-item primary">
+                    <i class="fas fa-images"></i>
+                    <span class="count">{{ results | length }}</span>
+                    <span class="label">Total Images</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grille des résultats -->
+        <div class="grid-container">
+            <!-- Colonne Parasitized -->
+            <div class="column bad-col">
+                <h2><i class="fas fa-skull-crossbones"></i> Cellules Parasitées</h2>
+                <p class="column-subtitle">Présence de Plasmodium détectée</p>
+                <div class="image-grid">
+                    {% for img, label, conf in results if label == 'Parasitized' %}
+                    <div class="image-box">
+                        <img src="{{ url_for('static', filename='uploads/' + patient_folder + '/' + img) }}">
+                        <div class="confidence-badge danger">
+                            {{ (conf * 100) | round(1) }}%
+                        </div>
+                        <small>{{ img[:15] }}...</small>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-check-circle"></i>
+                        <p>Aucune cellule parasitées détectée</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Colonne Uninfected -->
+            <div class="column good-col">
+                <h2><i class="fas fa-heartbeat"></i> Cellules Saines</h2>
+                <p class="column-subtitle">Aucun parasite détecté</p>
+                <div class="image-grid">
+                    {% for img, label, conf in results if label == 'Uninfected' %}
+                    <div class="image-box">
+                        <img src="{{ url_for('static', filename='uploads/' + patient_folder + '/' + img) }}" alt="{{ img }}">
+                        <div class="confidence-badge success">
+                            {{ (conf * 100) | round(1) }}%
+                        </div>
+                        <small>{{ img[:15] }}...</small>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-times-circle"></i>
+                        <p>Aucune cellule saine détectée</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Conclusion médicale -->
+        <div class="medical-conclusion">
+            <h3><i class="fas fa-stethoscope"></i> Conclusion Médicale</h3>
+            {% if infection_rate > 50 %}
+            <div class="conclusion-alert danger">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div>
+                    <h4>Risque Élevé d'Infection</h4>
+                    <p>Un taux d'infection de {{ infection_rate | round(2) }}% indique une forte probabilité de paludisme. Consultation médicale urgente recommandée.</p>
+                </div>
+            </div>
+            {% elif infection_rate > 10 %}
+            <div class="conclusion-alert warning">
+                <i class="fas fa-exclamation-circle"></i>
+                <div>
+                    <h4>Risque Modéré</h4>
+                    <p>Taux d'infection de {{ infection_rate | round(2) }}%. Surveillance médicale et tests complémentaires recommandés.</p>
+                </div>
+            </div>
+            {% else %}
+            <div class="conclusion-alert success">
+                <i class="fas fa-check-circle"></i>
+                <div>
+                    <h4>Risque Faible</h4>
+                    <p>Taux d'infection de {{ infection_rate | round(2) }}%. Résultats dans les normes attendues.</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Actions -->
+        <div class="action-buttons">
+            <a href="/" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Nouvelle Analyse
+            </a>
+            <button class="btn-primary" onclick="window.print()">
+                <i class="fas fa-print"></i> Imprimer le Rapport
+            </button>
+        </div>
+    </div>
+</body>
+</html>

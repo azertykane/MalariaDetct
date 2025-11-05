@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Résultat d'Analyse - MalariaDetect</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="logo">
+                <i class="fas fa-microscope"></i>
+                <span>MalariaDetect </span>
+            </div>
+            <div class="nav-links">
+                <a href="/"><i class="fas fa-home"></i> Accueil</a>
+                <a href="#"><i class="fas fa-redo"></i> Nouvelle Analyse</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="result-card">
+        <h1><i class="fas fa-chart-line"></i> Résultat de l'Analyse</h1>
+        
+        <!-- Image analysée -->
+        <div class="image-container">
+            <img src="{{ url_for('static', filename=image_path.split('static/')[1]) }}" class="result-image" alt="Image analysée">
+        </div>
+
+        <!-- Résultat principal -->
+        <div class="result-main">
+            {% if label == 'Parasitized' %}
+            <div class="result-alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h2>Résultat : <span class="bad">🦠 {{ label }}</span></h2>
+                <p>Présence de parasites détectée</p>
+            </div>
+            {% else %}
+            <div class="result-alert alert-success">
+                <i class="fas fa-check-circle"></i>
+                <h2>Résultat : <span class="good">✅ {{ label }}</span></h2>
+                <p>Aucun parasite détecté</p>
+            </div>
+            {% endif %}
+
+            <!-- Barre de confiance -->
+            <div class="confidence-section">
+                <h3>Niveau de Confiance : {{ (confidence * 100) | round(2) }}%</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ (confidence * 100) | round(2) }}%"></div>
+                </div>
+                <div class="confidence-labels">
+                    <span>Faible</span>
+                    <span>Élevé</span>
+                </div>
+            </div>
+
+            <!-- Recommandations -->
+            <div class="recommendations">
+                <h3><i class="fas fa-stethoscope"></i> Recommandations</h3>
+                {% if label == 'Parasitized' %}
+                <div class="recommendation-item danger">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>Consulter un médecin rapidement</span>
+                </div>
+                <div class="recommendation-item">
+                    <i class="fas fa-flask"></i>
+                    <span>Effectuer des tests complémentaires</span>
+                </div>
+                {% else %}
+                <div class="recommendation-item success">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Résultat normal - Surveillance recommandée</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="action-buttons">
+            <a href="/" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Nouvelle Analyse
+            </a>
+            <button class="btn-primary" onclick="window.print()">
+                <i class="fas fa-print"></i> Imprimer le Rapport
+            </button>
+        </div>
+    </div>
+</body>
+</html>
