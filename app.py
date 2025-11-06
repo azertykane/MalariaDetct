@@ -1,8 +1,11 @@
 import os
 import numpy as np
+from tensorflow.keras.preprocessing import image
 from flask import Flask, render_template, request, redirect, url_for, flash
+from werkzeug.utils import secure_filename
 from io import BytesIO
 from PIL import Image
+
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "malaria_secret_key_prod")
@@ -33,7 +36,7 @@ def download_model():
     print("📥 Téléchargement du modèle depuis Google Drive...")
     try:
         import gdown
-        url = "https://drive.google.com/uc?id=1WpDMYwGEbsxzD5BjUqyA2ajbSHjjxz63"  #  lien direct vers le .h5
+        url = "https://drive.google.com/file/d/1Dw8LOmHC3qaQPpLkhR79eTr_qWBIui9l"  #  lien direct vers le .h5
         gdown.download(url, MODEL_PATH, quiet=False)
         return os.path.exists(MODEL_PATH)
     except Exception as e:
@@ -132,19 +135,73 @@ def predict_single():
         return redirect(url_for('index'))
 
 @app.route('/predict_folder', methods=['POST'])
-def predict_folder_route():
-    files = request.files.getlist('folder')
-    if not files or files[0].filename == '':
-        flash("Aucun dossier sélectionné.", "error")
+def predict_folder():
+    try:
+        if 'folder' not in request.files:
+            flash("Aucun dossier n'a été sélectionné", "error")
+            return redirect(url_for('index'))
+
+        files = request.files.getlist('folder')
+        if len(files) == 0:
+            flash("Le dossier est vide", "error")
+            return redirect(url_for('index'))
+
+        patient_folder = os.path.join('static', 'uploads', 'memory', 'test2')
+        os.makedirs(patient_folder, exist_ok=True)
+
+        for f in os.listdir(patient_folder):
+            os.remove(os.path.join(patient_folder, f))
+
+        for file in files:
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(patient_folder, filename)
+            file.save(file_path)
+
+        print(f"[INFO] Dossier enregistré : {patient_folder}")
+
+        model_path = "best_model.h5"
+        model = load_model(model_path)
+
+        results = []
+        for filename in os.listdir(patient_folder):
+            file_path = os.path.join(patient_folder, filename)
+            img = image.load_img(file_path, target_size=(128, 128))
+            img_array = image.img_to_array(img)
+            img_array = np.expand_dims(img_array, axis=0) / 255.0
+
+            prediction = model.predict(img_array)
+            pred_label = "Parasitized" if prediction[0][0] > 0.5 else "Uninfected"
+
+            prob = float(prediction[0][0])
+            if pred_label == "Parasitized":
+               conf = prob * 100
+            else:
+               conf = (1 - prob) * 100
+            results.append({
+                "filename": filename,
+                "label": pred_label,
+                "probability": conf / 100
+            })
+
+        parasitized = [r for r in results if r['label'] == "Parasitized"]
+        uninfected = [r for r in results if r['label'] == "Uninfected"]
+        total = len(results)
+        infected = len(parasitized)
+        infection_rate = (infected / total) * 100 if total > 0 else 0
+
+        return render_template("result_folder.html",
+                               parasitized=parasitized,
+                               uninfected=uninfected,
+                               infection_rate=infection_rate,
+                               results=[(r['filename'], r['label'], r['probability']) for r in results],
+                               patient_folder="memory/test2")
+
+    except Exception as e:
+        print("Erreur traitement dossier :", e)
+        flash("Erreur lors du traitement du dossier", "error")
         return redirect(url_for('index'))
 
-    try:
-        results, infection_rate = predict_folder_memory(files)
-        return render_template('result_folder.html', results=results, infection_rate=infection_rate, patient_folder="memory")
-    except Exception as e:
-        print(f"Erreur dossier mémoire : {e}")
-        flash("Erreur lors du traitement du dossier.", "error")
-        return redirect(url_for('index'))
+
 
 @app.errorhandler(500)
 def internal_error(error):

@@ -28,6 +28,7 @@
         <div class="progress-container">
             <h2><i class="fas fa-chart-pie"></i> Taux d'Infection Global</h2>
             <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ infection_rate }}%;"></div>
             </div>
             <div class="stats">
                 <span>{{ infection_rate | round(2) }}% Infecté</span>
@@ -63,7 +64,7 @@
                 <div class="image-grid">
                     {% for img, label, conf in results if label == 'Parasitized' %}
                     <div class="image-box">
-                        <img src="{{ url_for('static', filename='uploads/' + patient_folder + '/' + img) }}">
+                        <img src="{{ url_for('static', filename='uploads/' + patient_folder + '/' + img) }}" alt="{{ img }}">
                         <div class="confidence-badge danger">
                             {{ (conf * 100) | round(1) }}%
                         </div>
