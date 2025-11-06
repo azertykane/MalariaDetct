@@ -27,18 +27,26 @@ def download_model():
     if not TENSORFLOW_AVAILABLE:
         print(" TensorFlow non disponible, impossible de charger le modèle")
         return False
-        
+
     MODEL_PATH = "best_model.h5"
     if os.path.exists(MODEL_PATH):
         print(" Modèle déjà présent")
         return True
-        
+
     print("📥 Téléchargement du modèle depuis Google Drive...")
     try:
         import gdown
-        url = "https://drive.google.com/file/d/1Dw8LOmHC3qaQPpLkhR79eTr_qWBIui9l"  #  lien direct vers le .h5
-        gdown.download(url, MODEL_PATH, quiet=False)
-        return os.path.exists(MODEL_PATH)
+        # ⚠️ Met ici le lien DIRECT (format uc?id=...) et ajoute fuzzy=True
+        url = "https://drive.google.com/uc?id=1Dw8LOmHC3qaQPpLkhR79eTr_qWBIui9l"
+        gdown.download(url, MODEL_PATH, quiet=False, fuzzy=True)
+
+        if os.path.exists(MODEL_PATH) and os.path.getsize(MODEL_PATH) > 1000000:
+            print("✅ Modèle téléchargé avec succès.")
+            return True
+        else:
+            print("⚠️ Téléchargement incomplet ou fichier corrompu.")
+            return False
+
     except Exception as e:
         print(f"Erreur téléchargement modèle : {e}")
         return False
