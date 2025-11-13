@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription - MalariaDetect</title>
+    <style>
+        :root {
+            --primary: #2c7fb8;
+            --secondary: #7fcdbb;
+            --accent: #edf8b1;
+            --dark: #253237;
+            --light: #f8f9fa;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 450px;
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: white;
+        }
+        
+        .logo i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .logo h1 {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        
+        .auth-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2.5rem;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+        
+        .auth-card h2 {
+            color: var(--dark);
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-size: 1.8rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(44, 127, 184, 0.2);
+        }
+        
+        .password-requirements {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #236fa0;
+            transform: translateY(-2px);
+        }
+        
+        .auth-links {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+        
+        .auth-links a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .auth-links a:hover {
+            text-decoration: underline;
+        }
+        
+        .flash-messages {
+            margin-bottom: 1.5rem;
+        }
+        
+        .flash-message {
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+        
+        .flash-error {
+            background: #ffeaea;
+            color: var(--danger);
+            border: 1px solid #ffcccc;
+        }
+        
+        .flash-success {
+            background: #eaffea;
+            color: var(--success);
+            border: 1px solid #ccffcc;
+        }
+        
+        .password-toggle {
+            position: relative;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #777;
+            cursor: pointer;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        @media (max-width: 480px) {
+            .auth-card {
+                padding: 2rem 1.5rem;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <i class="fas fa-microscope"></i>
+            <h1>MalariaDetect</h1>
+        </div>
+        
+        <div class="auth-card">
+            <h2>Créer un compte</h2>
+            
+            <!-- Messages flash (pour afficher les erreurs) -->
+            <div class="flash-messages">
+                <!-- Exemple de message d'erreur -->
+                <!-- <div class="flash-message flash-error">Nom d'utilisateur déjà utilisé</div> -->
+            </div>
+            
+            <form method="POST">
+                <div class="form-group">
+                    <label for="username">Nom d'utilisateur</label>
+                    <input type="text" id="username" name="username" class="form-control" placeholder="Choisissez un nom d'utilisateur" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Mot de passe</label>
+                    <div class="password-toggle">
+                        <input type="password" id="password" name="password" class="form-control" placeholder="Créez un mot de passe sécurisé" required>
+                        <button type="button" class="toggle-password" id="togglePassword">
+                            <i class="far fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="password-requirements">
+                        Le mot de passe doit contenir au moins 8 caractères
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm_password">Confirmer le mot de passe</label>
+                    <div class="password-toggle">
+                        <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Répétez votre mot de passe" required>
+                        <button type="button" class="toggle-password" id="toggleConfirmPassword">
+                            <i class="far fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">S'inscrire</button>
+            </form>
+            
+            <div class="auth-links">
+                <p>Déjà un compte ? <a href="{{ url_for('login') }}">Se connecter</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Fonction pour afficher/masquer le mot de passe
+        function setupPasswordToggle(inputId, buttonId) {
+            const button = document.getElementById(buttonId);
+            button.addEventListener('click', function() {
+                const passwordInput = document.getElementById(inputId);
+                const icon = this.querySelector('i');
+                
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+        }
+        
+        // Configuration des boutons d'affichage/masquage des mots de passe
+        setupPasswordToggle('password', 'togglePassword');
+        setupPasswordToggle('confirm_password', 'toggleConfirmPassword');
+        
+        // Validation de la confirmation du mot de passe
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('Les mots de passe ne correspondent pas.');
+            }
+        });
+    </script>
+</body>
+</html>

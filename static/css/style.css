@@ -22,7 +22,7 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
     min-height: 100vh;
     color: var(--dark);
 }
@@ -628,4 +628,18 @@ button:hover, .back-btn:hover {
     color: var(--gray);
     margin-bottom: 1rem;
     font-size: 0.9rem;
+}
+.logout-btn {
+    background: var(--danger);
+    color: var(--white) !important;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.logout-btn:hover {
+    background: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
 }
