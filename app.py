@@ -3,61 +3,65 @@ import sqlite3
 import numpy as np
 from flask import Flask, render_template, request, redirect, url_for, flash, session, g
 from werkzeug.utils import secure_filename
-from tensorflow.keras.preprocessing import image
 from io import BytesIO
 from PIL import Image
 
-# Initialisation de Flask
+# ================================
+#       FLASK INIT
+# ================================
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "malaria_secret_key_prod")
 
 IMG_SIZE = 128
 model = None
-
-# ================================
-#       BASE DE DONNÉES
-# ================================
 DB_PATH = "users.db"
 
+
+# ================================
+#           DATABASE
+# ================================
 def init_db():
-    """Crée la base SQLite pour les utilisateurs"""
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS users (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    username TEXT UNIQUE NOT NULL,
-                    password TEXT NOT NULL
-                )''')
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL
+        )
+    """)
     conn.commit()
     conn.close()
 
 init_db()
 
+
 # ================================
-#     CHARGEMENT DU MODÈLE
+#      MODEL LOADING
 # ================================
 try:
     from tensorflow.keras.models import load_model
     from tensorflow.keras.preprocessing.image import img_to_array
     import gdown
     TENSORFLOW_AVAILABLE = True
-except ImportError as e:
-    print(f"⚠️ TensorFlow non disponible : {e}")
+except ImportError:
+    print("❌ TensorFlow non disponible")
     TENSORFLOW_AVAILABLE = False
 
 
 def download_model():
-    """Télécharge le modèle depuis Google Drive si absent"""
+    """Télécharge le modèle si absent"""
     MODEL_PATH = "best_model.h5"
     if os.path.exists(MODEL_PATH):
-        print("✅ Modèle déjà présent")
+        print("📦 Modèle déjà présent.")
         return True
+
     try:
         url = "https://drive.google.com/uc?id=1Dw8LOmHC3qaQPpLkhR79eTr_qWBIui9l"
         gdown.download(url, MODEL_PATH, quiet=False, fuzzy=True)
         return os.path.exists(MODEL_PATH)
     except Exception as e:
-        print(f"Erreur téléchargement modèle : {e}")
+        print(f"⚠️ Erreur téléchargement : {e}")
         return False
 
 
@@ -66,55 +70,61 @@ if TENSORFLOW_AVAILABLE:
         if download_model():
             model = load_model("best_model.h5")
             print("✅ Modèle chargé avec succès.")
+        else:
+            print("❌ Impossible de charger le modèle.")
     except Exception as e:
-        print(f"Erreur chargement modèle : {e}")
+        print(f"⚠️ Erreur chargement modèle : {e}")
+
 
 # ================================
-#         PREDICTION
+#       PREDICTION LOGIC
 # ================================
 def predict_image_stream(file_stream):
-    """Analyse une image directement depuis la mémoire"""
+    """Analyse une image en mémoire"""
     if model is None:
-        return "Erreur: modèle non chargé", 0.0
+        return "Erreur", 0.0
 
     try:
-        img = Image.open(BytesIO(file_stream.read())).convert('RGB')
+        img = Image.open(BytesIO(file_stream.read())).convert("RGB")
         img = img.resize((IMG_SIZE, IMG_SIZE))
         img_array = img_to_array(img) / 255.0
-        img_array = np.expand_dims(img_array, axis=0)
+        img_array = np.expand_dims(img_array, 0)
 
         pred = model.predict(img_array, verbose=0)[0]
-        classes = ['Parasitized', 'Uninfected']
-        label = classes[np.argmax(pred)]
-        confidence = float(np.max(pred))
+        label = "Parasitized" if pred[0] > 0.5 else "Uninfected"
+        confidence = float(pred[0] if pred[0] > 0.5 else 1 - pred[0])
         return label, confidence
+
     except Exception as e:
-        print(f"Erreur analyse mémoire : {e}")
+        print("Erreur analyse :", e)
         return "Erreur", 0.0
 
 
 # ================================
-#         ROUTES AUTH
+#       AUTH MIDDLEWARE
 # ================================
 @app.before_request
 def before_request():
     g.user = session.get("user")
 
 
+# ================================
+#       AUTH ROUTES
+# ================================
 @app.route('/')
 def home():
-    return render_template('home.html')
+    return render_template("home.html")
 
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if request.method == 'POST':
+    if request.method == "POST":
         username = request.form['username'].strip()
         password = request.form['password'].strip()
 
         if not username or not password:
             flash("Veuillez remplir tous les champs.", "warning")
-            return redirect(url_for('register'))
+            return redirect(url_for("register"))
 
         try:
             conn = sqlite3.connect(DB_PATH)
@@ -122,18 +132,17 @@ def register():
             c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
             conn.commit()
             conn.close()
-            flash("✅ Compte créé avec succès, vous pouvez vous connecter.", "success")
-            return redirect(url_for('login'))
+            flash("✅ Compte créé avec succès.", "success")
+            return redirect(url_for("login"))
         except sqlite3.IntegrityError:
-            flash("⚠️ Nom d'utilisateur déjà pris.", "error")
-            return redirect(url_for('register'))
+            flash("Nom d'utilisateur déjà utilisé.", "error")
 
-    return render_template('register.html')
+    return render_template("register.html")
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
+    if request.method == "POST":
         username = request.form['username']
         password = request.form['password']
 
@@ -145,132 +154,112 @@ def login():
 
         if user:
             session['user'] = username
-            flash(f"Bienvenue, {username} 👋", "success")
-            return redirect(url_for('index'))
+            flash("Connexion réussie.", "success")
+            return redirect(url_for("index"))
         else:
-            flash("Identifiants invalides.", "error")
-            return redirect(url_for('login'))
+            flash("Identifiants incorrects.", "error")
 
-    return render_template('login.html')
+    return render_template("login.html")
 
 
 @app.route('/logout')
 def logout():
-    session.pop('user', None)
-    flash("Déconnexion réussie.", "info")
-    return redirect(url_for('home'))
+    session.pop("user", None)
+    flash("Déconnecté.", "info")
+    return redirect(url_for("home"))
 
 
 # ================================
-#     ROUTES DÉTECTION
+#       DETECTION ROUTES
 # ================================
 @app.route('/index')
 def index():
     if not g.user:
-        flash("Veuillez vous connecter pour accéder à l'analyse.", "warning")
-        return redirect(url_for('login'))
-    return render_template('index.html')
+        flash("Veuillez vous connecter.", "warning")
+        return redirect(url_for("login"))
+    return render_template("index.html")
 
 
 @app.route('/predict_single', methods=['POST'])
 def predict_single():
     if 'image' not in request.files:
-        flash("Aucune image sélectionnée.", "error")
-        return redirect(url_for('index'))
+        flash("Aucune image envoyée.", "error")
+        return redirect(url_for("index"))
 
     file = request.files['image']
     if file.filename == '':
-        flash("Aucune image sélectionnée.", "error")
-        return redirect(url_for('index'))
+        flash("Fichier vide.", "error")
+        return redirect(url_for("index"))
 
-    import base64
     image_bytes = file.read()
     label, conf = predict_image_stream(BytesIO(image_bytes))
-    img_base64 = base64.b64encode(image_bytes).decode('utf-8')
-    image_data = f"data:image/jpeg;base64,{img_base64}"
 
-    return render_template('result_single.html', label=label, confidence=conf, image_data=image_data)
+    import base64
+    img_base64 = base64.b64encode(image_bytes).decode("utf-8")
+    image_data = "data:image/jpeg;base64," + img_base64
+
+    return render_template("result_single.html", label=label, confidence=conf, image_data=image_data)
+
+
 @app.route('/predict_folder', methods=['POST'])
 def predict_folder():
     try:
-        if 'folder' not in request.files:
-            flash("Aucun dossier n'a été sélectionné", "error")
-            return redirect(url_for('index'))
-
         files = request.files.getlist('folder')
-        if len(files) == 0:
-            flash("Le dossier est vide", "error")
+
+        if not files:
+            flash("Aucun fichier.", "error")
             return redirect(url_for('index'))
 
-        patient_folder = os.path.join('static', 'uploads', 'memory', 'test2')
-        os.makedirs(patient_folder, exist_ok=True)
+        folder_path = "static/uploads/memory/test2"
+        os.makedirs(folder_path, exist_ok=True)
 
-        for f in os.listdir(patient_folder):
-            os.remove(os.path.join(patient_folder, f))
+        for f in os.listdir(folder_path):
+            os.remove(os.path.join(folder_path, f))
 
+        # Save files
         for file in files:
-            filename = secure_filename(file.filename)
-            file_path = os.path.join(patient_folder, filename)
-            file.save(file_path)
+            file.save(os.path.join(folder_path, secure_filename(file.filename)))
 
-        print(f"[INFO] Dossier enregistré : {patient_folder}")
-
-        model_path = "best_model.h5"
-        model = load_model(model_path)
-
+        # Prediction
         results = []
-        for filename in os.listdir(patient_folder):
-            file_path = os.path.join(patient_folder, filename)
-            img = image.load_img(file_path, target_size=(128, 128))
-            img_array = image.img_to_array(img)
-            img_array = np.expand_dims(img_array, axis=0) / 255.0
+        for filename in os.listdir(folder_path):
+            img = Image.open(os.path.join(folder_path, filename)).resize((128, 128))
+            arr = np.expand_dims(np.array(img) / 255.0, 0)
+            pred = model.predict(arr, verbose=0)[0][0]
+            label = "Parasitized" if pred > 0.5 else "Uninfected"
+            conf = float(pred if pred > 0.5 else 1 - pred)
+            results.append({"filename": filename, "label": label, "probability": conf})
 
-            prediction = model.predict(img_array)
-            pred_label = "Parasitized" if prediction[0][0] > 0.5 else "Uninfected"
+        parasitized = [r for r in results if r["label"] == "Parasitized"]
+        uninfected = [r for r in results if r["label"] == "Uninfected"]
+        infection_rate = (len(parasitized) / len(results)) * 100
 
-            prob = float(prediction[0][0])
-            if pred_label == "Parasitized":
-               conf = prob * 100
-            else:
-               conf = (1 - prob) * 100
-            results.append({
-                "filename": filename,
-                "label": pred_label,
-                "probability": conf / 100
-            })
-
-        parasitized = [r for r in results if r['label'] == "Parasitized"]
-        uninfected = [r for r in results if r['label'] == "Uninfected"]
-        total = len(results)
-        infected = len(parasitized)
-        infection_rate = (infected / total) * 100 if total > 0 else 0
-
-        return render_template("result_folder.html",
-                               parasitized=parasitized,
-                               uninfected=uninfected,
-                               infection_rate=infection_rate,
-                               results=[(r['filename'], r['label'], r['probability']) for r in results],
-                               patient_folder="memory/test2")
+        return render_template(
+            "result_folder.html",
+            parasitized=parasitized,
+            uninfected=uninfected,
+            infection_rate=infection_rate,
+            patient_folder="memory/test2"
+        )
 
     except Exception as e:
-        print("Erreur traitement dossier :", e)
-        flash("Erreur lors du traitement du dossier", "error")
-        return redirect(url_for('index'))
-
+        print("Erreur dossier :", e)
+        flash("Erreur analyse dossier.", "error")
+        return redirect(url_for("index"))
 
 
 # ================================
-#        ERREUR SERVER
+#       ERROR HANDLER
 # ================================
 @app.errorhandler(500)
 def internal_error(error):
-    flash('Erreur interne du serveur.', 'error')
-    return redirect(url_for('index'))
+    flash("Erreur serveur.", "error")
+    return redirect(url_for("index"))
 
 
 # ================================
-#        RUN SERVEUR
+#       RUN SERVER
 # ================================
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port)
